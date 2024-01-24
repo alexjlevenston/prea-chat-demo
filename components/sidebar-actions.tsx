@@ -41,7 +41,7 @@ export function SidebarActions({
   const [isRemovePending, startRemoveTransition] = React.useTransition()
 
   const callRemoveChatEndpoint = async (chatId: string, chatPath: string) => {
-    const response = await fetch(`/api/chat/${chatId}`, {
+    const response = await fetch(`/api/chat`, {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
