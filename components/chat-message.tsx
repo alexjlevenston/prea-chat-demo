@@ -11,11 +11,29 @@ import { MemoizedReactMarkdown } from '@/components/markdown'
 import { IconOpenAI, IconUser } from '@/components/ui/icons'
 import { ChatMessageActions } from '@/components/chat-message-actions'
 
+const popupStyle: React.CSSProperties = {
+  position: 'absolute',
+  width: '300px', // Example width
+  height: '200px', // Example height
+  backgroundColor: '#fff',
+  border: '1px solid #ddd',
+  padding: '10px',
+  boxSizing: 'border-box',
+  zIndex: 1000,
+  top: '-210px', // Position above the link
+  left: '50%',
+  transform: 'translateX(-50%)',
+  display: 'none', // Initially hidden
+};
+
+
+
 export interface ChatMessageProps {
   message: Message
 }
 
 export function ChatMessage({ message, ...props }: ChatMessageProps) {
+  
   return (
     <div
       className={cn('group relative mb-4 flex items-start md:-ml-12')}
@@ -38,6 +56,29 @@ export function ChatMessage({ message, ...props }: ChatMessageProps) {
           components={{
             p({ children }) {
               return <p className="mb-2 last:mb-0">{children}</p>
+            },
+            a({ children, ...props }: React.AnchorHTMLAttributes<HTMLAnchorElement>) {
+              // Function to toggle popup display with proper TypeScript typing
+              const togglePopup = (e: React.MouseEvent<HTMLAnchorElement>, display: string) => {
+                const popupElement = e.currentTarget.nextSibling as HTMLElement;
+                popupElement.style.display = display;
+              };
+
+              return (
+                <>
+                  <a
+                    className="text-primary-500 hover:underline relative"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onMouseEnter={(e) => togglePopup(e, 'block')}
+                    onMouseLeave={(e) => togglePopup(e, 'none')}
+                    {...props}
+                  >
+                    {children}
+                  </a>
+                  <div style={popupStyle}>Popup content goes here</div>
+                </>
+              );
             },
             code({ node, inline, className, children, ...props }) {
               if (children.length) {
