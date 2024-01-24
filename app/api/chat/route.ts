@@ -4,6 +4,7 @@ import OpenAI from 'openai'
 
 import { auth } from '@/auth'
 import { nanoid } from '@/lib/utils'
+import { removeChat } from '@/app/actions'
 
 export const runtime = 'edge'
 
@@ -62,4 +63,28 @@ export async function POST(req: Request) {
   })
 
   return new StreamingTextResponse(stream)
+}
+
+export async function DELETE(req: Request) {
+  const json = await req.json()
+  const { id, path } = json
+  const userId = "not a user" // (await auth())?.user.id
+
+  if (!userId) {
+    return new Response('Unauthorized', {
+      status: 401
+    })
+  }
+
+  const result = await removeChat({ id, path })
+
+  if (result?.error) {
+    return new Response(result.error, {
+      status: 401
+    })
+  }
+
+  return new Response('Chat deleted successfully', {
+    status: 200
+  })
 }

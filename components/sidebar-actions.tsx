@@ -40,6 +40,20 @@ export function SidebarActions({
   const [shareDialogOpen, setShareDialogOpen] = React.useState(false)
   const [isRemovePending, startRemoveTransition] = React.useTransition()
 
+  const callRemoveChatEndpoint = async (chatId: string, chatPath: string) => {
+    const response = await fetch(`/api/chat/${chatId}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ id: chatId, path: chatPath }),
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to delete chat');
+    }
+  };
+
   return (
     <>
       <div className="space-x-1">
@@ -95,23 +109,17 @@ export function SidebarActions({
               disabled={isRemovePending}
               onClick={event => {
                 event.preventDefault()
-                // @ts-ignore
                 startRemoveTransition(async () => {
-                  const result = await removeChat({
-                    id: chat.id,
-                    path: chat.path
-                  })
-
-                  if (result && 'error' in result) {
-                    toast.error(result.error)
-                    return
+                  try {
+                    await callRemoveChatEndpoint(chat.id, chat.path);
+                    setDeleteDialogOpen(false);
+                    router.refresh();
+                    router.push('/');
+                    toast.success('Chat deleted');
+                  } catch (error) {
+                    toast.error('Error deleting chat');
                   }
-
-                  setDeleteDialogOpen(false)
-                  router.refresh()
-                  router.push('/')
-                  toast.success('Chat deleted')
-                })
+                });
               }}
             >
               {isRemovePending && <IconSpinner className="mr-2 animate-spin" />}
