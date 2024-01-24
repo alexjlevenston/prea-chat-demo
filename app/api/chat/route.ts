@@ -5,6 +5,7 @@ import OpenAI from 'openai'
 import { auth } from '@/auth'
 import { nanoid } from '@/lib/utils'
 import { removeChat } from '@/app/actions'
+import { stream } from 'undici-types'
 
 export const runtime = 'edge'
 
@@ -35,6 +36,7 @@ export async function POST(req: Request) {
   })
 
   const stream = OpenAIStream(res, {
+
     async onCompletion(completion) {
       const title = json.messages[0].content.substring(0, 100)
       const id = json.id ?? nanoid()
@@ -61,8 +63,32 @@ export async function POST(req: Request) {
       })
     }
   })
+  const reader = stream.getReader()
+  async function* streamGenerator() {
+    const chunks = []
+    const decoder = new TextDecoder()
+    while (true) {
+      const { done, value } = await reader.read()
+      if (done) break
+      const chunk = decoder.decode(value)
+      chunks.push(chunk)
+    }
+    yield chunks.join('')
+  }
 
-  return new StreamingTextResponse(stream)
+  const newStream = new ReadableStream({
+    start(controller) {
+      ;(async () => {
+        for await (let chunk of streamGenerator()) {
+          controller.enqueue(chunk)
+        }
+        controller.close()
+      }
+      )()
+    }
+  })
+
+  return new StreamingTextResponse(newStream)
 }
 
 export async function DELETE(req: Request) {
