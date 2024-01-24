@@ -16,7 +16,7 @@ import { SidebarToggle } from './sidebar-toggle'
 import { ChatHistory } from './chat-history'
 
 async function UserOrLogin() {
-  const session = await auth()
+  const session = { "user": { "id": "not a user" } } // await auth()
   return (
     <>
       {session?.user ? (
